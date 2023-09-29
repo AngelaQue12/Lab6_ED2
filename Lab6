@@ -1,0 +1,168 @@
+
+#include <SPI.h>
+#include <SD.h>
+int menu = 65;
+File root;
+File myFile;
+
+unsigned long startTime;
+unsigned long timeoutDuration = 5000;
+
+void setup()
+{
+  // Open serial communications and wait for port to open:
+  Serial.begin(9600);
+  
+  Serial.println("Menu: 1: Imagen 1; 2: Imagen 2, 3: Imagen 3; 4: Dibujar");
+  
+  SPI.setModule(0);
+
+
+  Serial.print("inicializacion SD card...");
+  // On the Ethernet Shield, CS is pin 4. It's set as an output by default.
+  // Note that even if it's not used as the CS pin, the hardware SS pin
+  // (10 on most Arduino boards, 53 on the Mega) must be left as an output
+  // or the SD library functions will not work.
+  pinMode(10, OUTPUT);
+
+  if (!SD.begin(32)) {
+    Serial.println("inicializacion fallida!");
+    return;
+  }
+  Serial.println("inicializacion terminada.");
+  Serial.println("Menu: 1: Imagen 1; 2: Imagen 2, 3: Imagen 3; 4: Dibujar");
+  
+  root = SD.open("/");
+
+  printDirectory(root, 0);
+
+  Serial.println("done!");
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  
+  if (Serial.available() > 0) {
+    menu = Serial.read();
+   
+    // El switch y los casos deben estar dentro de esta condición
+    switch (menu) {
+      case 49:
+        myFile = SD.open("od.txt");
+        if (myFile) {
+          Serial.println("od.txt:");
+      
+          // read from the file until there's nothing else in it:
+          while (myFile.available()) {
+            Serial.write(myFile.read());
+          }
+          // close the file:
+          myFile.close();
+        } else {
+          // if the file didn't open, print an error:
+          Serial.println("error abriendo od.txt");
+        }
+        menu = 0;
+        break;
+      case 50:
+        myFile = SD.open("top.txt");
+        if (myFile) {
+          Serial.println("top.txt:");
+      
+          // read from the file until there's nothing else in it:
+          while (myFile.available()) {
+            Serial.write(myFile.read());
+          }
+          // close the file:
+          myFile.close();
+        } else {
+          // if the file didn't open, print an error:
+          Serial.println("error abriendo top.txt");
+        }
+        menu = 0;
+        break;
+      case 51:
+        myFile = SD.open("flor.txt");
+        if (myFile) {
+          Serial.println("flor.txt:");
+      
+          // read from the file until there's nothing else in it:
+          while (myFile.available()) {
+            Serial.write(myFile.read());
+          }
+          // close the file:
+          myFile.close();
+        } else {
+          // if the file didn't open, print an error:
+          Serial.println("error abriendo flor.txt");
+        }
+        menu = 0;
+        break;
+        // Para escribir
+        case 52:
+          crear_dibujo(); 
+          menu = 0;
+          break;
+        
+    }
+  }
+
+  // Mostrar el menú cuando no se está esperando una entrada
+  if (menu == 0) {
+    Serial.println("Menu: 1: Imagen 1; 2: Imagen 2, 3: Imagen 3; 4: Dibujar");
+  }
+}
+
+void printDirectory(File dir, int numTabs) {
+   while(true) {
+     
+     File entry =  dir.openNextFile();
+     if (! entry) {
+       // no more files
+       break;
+     }
+     for (uint8_t i=0; i<numTabs; i++) {
+       Serial.print('\t');
+     }
+     Serial.print(entry.name());
+     if (entry.isDirectory()) {
+       Serial.println("/");
+       printDirectory(entry, numTabs+1);
+     } else {
+       // files have sizes, directories do not
+       Serial.print("\t\t");
+       Serial.println(entry.size(), DEC);
+     }
+     entry.close();
+   }
+}
+
+void crear_dibujo(){
+  Serial.println("Envíe '6' para guardar.");
+
+  String dibujo = "";  
+
+  while (true) {
+    if (Serial.available() > 0) {
+      char c = Serial.read();
+  
+      if (c == '6') {
+        Serial.println("Guardando el dibujo...");
+  
+        File myFile = SD.open("dibujo.txt", FILE_WRITE);
+  
+        if (myFile) {
+          myFile.print(dibujo);
+          myFile.close();
+          Serial.println("Dibujo guardado correctamente como dibujo.txt");
+        } else {
+          Serial.println("Error");
+        }
+        break;
+      } else {
+        dibujo += c;  // Agregar el carácter a la variable dibujo
+      }
+    }
+  }
+
+}
